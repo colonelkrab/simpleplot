@@ -18,5 +18,5 @@ if step by is 1, x-axis linearly increases by 1. if it is 2 axis increases by 2 
     }
 }
 ```
-Press Up/DOWN arrow Keys to zoom IN/OUT
+Press Up/DOWN arrow Keys to zoom in/out \
 Press LEFT/RIGHT arrow keys to shift left and right
