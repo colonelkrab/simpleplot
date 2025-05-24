@@ -13,10 +13,12 @@ pub struct Plot<'a> {
     offset_x: i32,
     view_width: f32,
     view_height: f32,
+    view_width_multiplier: f32,
     width_margin_percent: f32,
     camera: Camera2D,
     step_by: usize,
     render_target: RenderTarget,
+    screen_width: f32,
 }
 
 impl Plot<'_> {
@@ -36,14 +38,16 @@ impl Plot<'_> {
             h: RENDER_HEIGHT,
         });
         camera.render_target = Some(render_target.clone());
-
+        let screen_width = screen_width();
         let ceil_y = max_y.ceil() as u32 + 1;
         let ceil_x = data.last().unwrap().0.ceil() as u32 + 1;
         let scale_x = RENDER_WIDTH / ceil_x as f32;
         let scale_y = RENDER_HEIGHT / ceil_y as f32;
-        let view_width = (100.0 - width_margin_percent) / 100.0 * screen_width();
+        let view_width = (100.0 - width_margin_percent) / 100.0 * screen_width;
         let view_height = view_width * 1.0 / ASPECT_RATIO;
-        Plot {
+        let view_width_multiplier = (100.0 - 2.0 * width_margin_percent) / 100.0;
+
+        let plot = Plot {
             data,
             ceil_x,
             ceil_y,
@@ -53,40 +57,52 @@ impl Plot<'_> {
             offset_x: 0,
             view_width,
             view_height,
+            view_width_multiplier,
             width_margin_percent,
             camera,
             step_by,
             render_target,
+            screen_width,
+        };
+        plot.draw_to_texture();
+        return plot;
+    }
+    fn update_view_size(&mut self) -> bool {
+        let new_width = screen_width();
+        if new_width == self.screen_width {
+            return false;
         }
-    }
-    fn update_view_size(&mut self) {
-        self.view_width = (100.0 - 2.0 * self.width_margin_percent) / 100.0 * screen_width();
+        self.screen_width = new_width;
+        self.view_width = self.view_width_multiplier * new_width;
         self.view_height = self.view_width * 1.0 / ASPECT_RATIO;
+        true
     }
-    fn read_input(&mut self) {
+    fn read_input(&mut self) -> bool {
         if is_key_pressed(KeyCode::Up) {
             self.zoom += 0.25;
             self.scale_x = RENDER_WIDTH / self.ceil_x as f32 * self.zoom;
+            return true;
         }
 
         if is_key_pressed(KeyCode::Down) {
             self.zoom -= 0.25;
-
             self.scale_x = RENDER_WIDTH / self.ceil_x as f32 * self.zoom;
+            return true;
         }
 
         if is_key_down(KeyCode::Left) {
             self.offset_x -= 1;
+            return true;
         }
 
         if is_key_down(KeyCode::Right) {
             self.offset_x += 1;
+            return true;
         }
+        false
     }
-    pub fn draw(&mut self) {
-        self.update_view_size();
-        self.read_input();
 
+    fn draw_to_texture(&self) {
         set_camera(&self.camera);
         clear_background(WHITE);
 
@@ -110,24 +126,36 @@ impl Plot<'_> {
             draw_line(prev.x, prev.y, plot_x, plot_y, 2.0 * RES, LIME);
             prev = vec2(plot_x, plot_y);
         }
+    }
+    pub async fn draw(&mut self) {
+        loop {
+            let update_view = self.update_view_size();
+            let read_input = self.read_input();
+            if update_view | read_input {
+                self.draw_to_texture();
+                println!("draw");
+            }
 
-        set_default_camera();
-        draw_texture_ex(
-            &self.render_target.texture,
-            5.0 / 100.0 * screen_width(),
-            0.0,
-            WHITE,
-            DrawTextureParams {
-                dest_size: Some(vec2(self.view_width, self.view_height)),
-                source: Some(Rect {
-                    x: 0.0,
-                    y: 0.0,
-                    w: RENDER_WIDTH,
-                    h: RENDER_HEIGHT,
-                }),
-                flip_y: true,
-                ..Default::default()
-            },
-        );
+            set_default_camera();
+            draw_texture_ex(
+                &self.render_target.texture,
+                self.width_margin_percent / 100.0 * self.screen_width,
+                0.0,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(vec2(self.view_width, self.view_height)),
+                    source: Some(Rect {
+                        x: 0.0,
+                        y: 0.0,
+                        w: RENDER_WIDTH,
+                        h: RENDER_HEIGHT,
+                    }),
+                    flip_y: true,
+                    ..Default::default()
+                },
+            );
+
+            next_frame().await
+        }
     }
 }
