@@ -103,11 +103,13 @@ impl Plot<'_> {
         }
 
         if is_key_down(KeyCode::A) {
+            self.offset_speed += 1;
             self.offset_x -= 1 + ((5.0 * f32::log10(self.offset_speed as f32)).floor()) as i32;
             return true;
         }
 
         if is_key_down(KeyCode::D) {
+            self.offset_speed += 1;
             self.offset_x += 1 + ((5.0 * f32::log10(self.offset_speed as f32)).floor()) as i32;
             return true;
         }
