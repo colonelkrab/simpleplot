@@ -1,21 +1,25 @@
 # simpleplot
 usage:
-```
+```rust
+use crate::rand::gen_range;
 use macroquad::prelude::*;
 use simpleplot::Plot;
 
-#[macroquad::main("Plot")]
+#[macroquad::main("Demo Plot")]
 async fn main() {
-    let data: Vec<(f32, f32)> = vec![(0.0,2.0), (1.0,5.0), (2.0, 9.0), (5.0,10.0)] // example data
-    let mut plot: Plot = Plot::new(&data, max_y, width_magrin_percent, step_by);
-/*
-data should be sorted in ascending order of x-axis
-max_y is the maximum possible value on y axis (in the example data it is 10.0)
-if step by is 1, x-axis linearly increases by 1. if it is 2 axis increases by 2 and so on.
-*/
+    const MAX_Y: f32 = 10.0;
+    const WIDTH_MARGIN_PERCENT: f32 = 1.0;
+    const STEP_BY: usize = 5;
+
+    let mut data: Vec<(f32, f32)> = Vec::new();
+    for i in 0..100 {
+        data.push(((i + 1) as f32, gen_range(2.0, MAX_Y)));
+    }
+
+    let mut plot = Plot::new(&data, MAX_Y, WIDTH_MARGIN_PERCENT, STEP_BY);
     plot.draw().await;
 }
 ```
-Press Up/DOWN arrow Keys to zoom in/out \
+Press Up/DOWN arrow keys to zoom in/out \
 Press LEFT/RIGHT arrow keys to shift left and right by 1 unit \
-Press A/D keys for speed shifting left and right\
+Press A/D keys for speed shifting left and right
