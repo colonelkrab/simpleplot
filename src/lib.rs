@@ -19,6 +19,7 @@ pub struct Plot<'a> {
     step_by: usize,
     render_target: RenderTarget,
     screen_width: f32,
+    offset_speed: u32,
 }
 
 impl Plot<'_> {
@@ -55,6 +56,7 @@ impl Plot<'_> {
             scale_y,
             zoom: 1.0,
             offset_x: 0,
+            offset_speed: 1,
             view_width,
             view_height,
             view_width_multiplier,
@@ -90,15 +92,30 @@ impl Plot<'_> {
             return true;
         }
 
-        if is_key_down(KeyCode::Left) {
+        if is_key_pressed(KeyCode::Left) {
             self.offset_x -= 1;
             return true;
         }
 
-        if is_key_down(KeyCode::Right) {
+        if is_key_pressed(KeyCode::Right) {
             self.offset_x += 1;
             return true;
         }
+
+        if is_key_down(KeyCode::A) {
+            self.offset_x -= 1 + ((5.0 * f32::log10(self.offset_speed as f32)).floor()) as i32;
+            return true;
+        }
+
+        if is_key_down(KeyCode::D) {
+            self.offset_x += 1 + ((5.0 * f32::log10(self.offset_speed as f32)).floor()) as i32;
+            return true;
+        }
+
+        if is_key_released(KeyCode::A) || is_key_released(KeyCode::D) {
+            self.offset_speed = 10;
+        }
+
         false
     }
 
@@ -106,19 +123,28 @@ impl Plot<'_> {
         set_camera(&self.camera);
         clear_background(WHITE);
 
+        //drawing gridlines and ticks
+        let cell_space = self.scale_x * self.step_by as f32;
+        let mut skip_draw_text = 0; //say
         for i in (0..self.ceil_x).step_by(self.step_by) {
             let x = self.scale_x * (i as i32 - self.offset_x) as f32;
-            draw_line(x, 0.0, x, RENDER_HEIGHT, 1.0 * RES, GRAY);
-            draw_text(&i.to_string(), x, RENDER_HEIGHT, 40.0 * RES, BLACK);
+
+            if skip_draw_text == 0 {
+                let size = measure_text(&i.to_string(), None, (40.0 * RES) as u16, 1.0);
+                skip_draw_text = (size.width / cell_space).ceil() as u32; //number_of_cells_needed_to_draw_text
+                draw_line(x, 0.0, x, RENDER_HEIGHT, 1.0 * RES, GRAY);
+                draw_text(&i.to_string(), x, RENDER_HEIGHT, 40.0 * RES, BLACK);
+            }
+            draw_line(x, 0.0, x, RENDER_HEIGHT, 0.8 * RES, GRAY);
+            skip_draw_text -= 1;
         }
 
         for i in 0..self.ceil_y {
             let y = self.scale_y * i as f32;
             draw_line(0.0, y, RENDER_WIDTH, y, 1.0 * RES, GRAY);
-
             draw_text(&(self.ceil_y - i).to_string(), 0.0, y, 40.0 * RES, BLACK);
         }
-
+        // graph
         let mut prev = vec2(0.0, RENDER_HEIGHT);
         for (x, y) in self.data {
             let plot_x = (x - self.offset_x as f32) * self.scale_x;
@@ -133,7 +159,6 @@ impl Plot<'_> {
             let read_input = self.read_input();
             if update_view | read_input {
                 self.draw_to_texture();
-                println!("draw");
             }
 
             set_default_camera();
