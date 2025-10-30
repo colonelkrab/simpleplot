@@ -20,6 +20,8 @@ pub struct Plot<'a> {
     render_target: RenderTarget,
     screen_width: f32,
     offset_speed: u32,
+    line_width: f32,
+    color: Color,
 }
 
 impl Plot<'_> {
@@ -28,6 +30,8 @@ impl Plot<'_> {
         max_y: f32,
         width_margin_percent: f32,
         step_by: usize,
+        line_width: f32,
+        color: Color,
     ) -> Plot<'a> {
         let render_target = render_target(RENDER_WIDTH as u32, RENDER_HEIGHT as u32);
         render_target.texture.set_filter(FilterMode::Linear);
@@ -40,7 +44,7 @@ impl Plot<'_> {
         });
         camera.render_target = Some(render_target.clone());
         let screen_width = screen_width();
-        let ceil_y = max_y.ceil() as u32 + 1;
+        let ceil_y = max_y.ceil() as u32 + 1 + 1;
         let ceil_x = data.last().unwrap().0.ceil() as u32 + 1;
         let scale_x = RENDER_WIDTH / ceil_x as f32;
         let scale_y = RENDER_HEIGHT / ceil_y as f32;
@@ -65,6 +69,8 @@ impl Plot<'_> {
             step_by,
             render_target,
             screen_width,
+            line_width,
+            color,
         };
         plot.draw_to_texture();
         return plot;
@@ -168,7 +174,14 @@ impl Plot<'_> {
         for (x, y) in self.data {
             let plot_x = (x - self.offset_x as f32) * self.scale_x;
             let plot_y = (RENDER_HEIGHT) - (y + 1.0) * self.scale_y;
-            draw_line(prev.x, prev.y, plot_x, plot_y, 2.0 * RES, LIME);
+            draw_line(
+                prev.x,
+                prev.y,
+                plot_x,
+                plot_y,
+                self.line_width * RES,
+                self.color,
+            );
             prev = vec2(plot_x, plot_y);
         }
     }
