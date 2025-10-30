@@ -1,6 +1,12 @@
 # simpleplot
 usage:
+```toml
+# cargo.toml
+[dependencies]
+simpleplot = {git = "https://github.com/colonelkrab/simpleplot.git"}
+```
 ```rust
+// main.rs
 use crate::rand::gen_range;
 use macroquad::prelude::*;
 use simpleplot::Plot;
@@ -22,4 +28,4 @@ async fn main() {
 ```
 Press Up/DOWN arrow keys to zoom in/out \
 Press LEFT/RIGHT arrow keys to shift left and right by 1 unit \
-Press A/D keys for speed shifting left and right
+Press WASD keys for faster actions 
