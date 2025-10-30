@@ -153,15 +153,21 @@ impl Plot<'_> {
         }
 
         for i in 0..self.ceil_y {
-            let y = self.scale_y * i as f32;
+            let y = self.scale_y * (i) as f32;
             draw_line(0.0, y, RENDER_WIDTH, y, 1.0 * RES, GRAY);
-            draw_text(&(self.ceil_y - i).to_string(), 0.0, y, 40.0 * RES, BLACK);
+            draw_text(
+                &(self.ceil_y - (i + 1)).to_string(),
+                0.0,
+                y,
+                40.0 * RES,
+                BLACK,
+            );
         }
         // graph
         let mut prev = vec2(0.0, RENDER_HEIGHT);
         for (x, y) in self.data {
             let plot_x = (x - self.offset_x as f32) * self.scale_x;
-            let plot_y = RENDER_HEIGHT - y * self.scale_y;
+            let plot_y = (RENDER_HEIGHT) - (y + 1.0) * self.scale_y;
             draw_line(prev.x, prev.y, plot_x, plot_y, 2.0 * RES, LIME);
             prev = vec2(plot_x, plot_y);
         }
