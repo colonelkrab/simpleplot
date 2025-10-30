@@ -91,6 +91,17 @@ impl Plot<'_> {
             self.scale_x = RENDER_WIDTH / self.ceil_x as f32 * self.zoom;
             return true;
         }
+        if is_key_down(KeyCode::W) {
+            self.zoom += 0.25;
+            self.scale_x = RENDER_WIDTH / self.ceil_x as f32 * self.zoom;
+            return true;
+        }
+
+        if is_key_down(KeyCode::S) {
+            self.zoom -= 0.25;
+            self.scale_x = RENDER_WIDTH / self.ceil_x as f32 * self.zoom;
+            return true;
+        }
 
         if is_key_pressed(KeyCode::Left) {
             self.offset_x -= 1;
